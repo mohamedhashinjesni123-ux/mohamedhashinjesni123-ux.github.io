@@ -1,0 +1,65 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2563 >>
+stream
+BT
+/F2 18 Tf 1 0 0 1 48 755 Tm (Mohamed Hashin S) Tj
+/F1 11 Tf 1 0 0 1 48 730 Tm (Computer Science Undergraduate | Aspiring Software Engineer) Tj
+/F1 10 Tf 1 0 0 1 48 712 Tm (Email: mohamedhashins@gmail.com | GitHub: github.com/mhsatgit) Tj
+/F1 10 Tf 1 0 0 1 48 695 Tm (LinkedIn: linkedin.com/in/mohamed-hashin-s-569151384) Tj
+/F2 12 Tf 1 0 0 1 48 663 Tm (EDUCATION) Tj
+/F2 10 Tf 1 0 0 1 48 644 Tm (Chennai Institute of Technology - B.E. Computer Science and Engineering) Tj
+/F1 10 Tf 1 0 0 1 48 627 Tm (2025 - 2029 \\(Expected\\) | CGPA: 9.03) Tj
+/F1 10 Tf 1 0 0 1 48 610 Tm (Class XII: 84.2% | Class X: 86.6%) Tj
+/F2 12 Tf 1 0 0 1 48 578 Tm (FEATURED PROJECTS) Tj
+/F2 10 Tf 1 0 0 1 48 559 Tm (Cursorly - Ultra-Precise Mobile Mouse Control \\(github.com/mhsatgit/Cursorly\\)) Tj
+/F1 9 Tf 1 0 0 1 48 542 Tm (  Kotlin, Jetpack Compose, Python, FastAPI, Win32 SendInput, WebSockets, ADB, BLE HID) Tj
+/F1 9 Tf 1 0 0 1 48 526 Tm (  Mobile-to-PC touchpad with One Euro jitter filtering and sub-pixel accumulation.) Tj
+/F2 10 Tf 1 0 0 1 48 510 Tm (CompassLink - Live Android Orientation \\(github.com/mhsatgit/CompassLink\\)) Tj
+/F1 9 Tf 1 0 0 1 48 493 Tm (  Kotlin, Android SensorManager, Node.js, HTML5 Canvas, ADB Reverse Tunneling) Tj
+/F1 9 Tf 1 0 0 1 48 477 Tm (  Streams smartphone quaternion telemetry into an interactive 3D handset dashboard.) Tj
+/F2 10 Tf 1 0 0 1 48 461 Tm (FairScore - Explainable & Fair Credit Risk Prediction) Tj
+/F1 9 Tf 1 0 0 1 48 444 Tm (  Python, Scikit-learn, Random Forest, LIME, AIF360, Next.js) Tj
+/F1 9 Tf 1 0 0 1 48 428 Tm (  Predicts loan default risk with per-applicant LIME explanations and bias analysis.) Tj
+/F2 10 Tf 1 0 0 1 48 412 Tm (Smartwatch UI Replica) Tj
+/F1 9 Tf 1 0 0 1 48 395 Tm (  HTML, CSS, JavaScript - Frontend smartwatch interface inspired by Fastrack FT_A9508.) Tj
+/F2 12 Tf 1 0 0 1 48 364 Tm (ACHIEVEMENTS) Tj
+/F2 10 Tf 1 0 0 1 48 345 Tm (VIT Parallax Hackathon - Runner-Up \\(Team of 5\\)) Tj
+/F1 9 Tf 1 0 0 1 48 328 Tm (  Multi-Objective Dynamic Workload Orchestrator for Edge-Core Cloud Architectures.) Tj
+/F1 9 Tf 1 0 0 1 48 312 Tm (  Built migration controller and simulated Kubernetes networks with K3d and netem.) Tj
+/F2 12 Tf 1 0 0 1 48 281 Tm (SKILLS & CERTIFICATIONS) Tj
+/F1 9 Tf 1 0 0 1 48 262 Tm (Languages: Python, C++, Java, SQL | AI/ML: Scikit-learn, LIME, AIF360, TF-IDF) Tj
+/F1 9 Tf 1 0 0 1 48 246 Tm (Web & Systems: HTML, CSS, JavaScript, Next.js, FastAPI, Kotlin, Compose, ADB, WebSockets) Tj
+/F1 9 Tf 1 0 0 1 48 230 Tm (Certifications: PCEP, PCAP, Master in Java, Master in Python) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000002866 00000 n 
+0000002936 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3011
+%%EOF
