@@ -39,40 +39,49 @@ const PORTFOLIO_CONFIG = {
 
 const WORKBENCH_MODULES = {
   cursorly: {
-    module: "Cursorly Input Engine",
-    channel: "WebSocket · ADB · BLE HID",
-    state: "Sub-pixel stream active",
+    file: "cursorly/engine/filter_one_euro.py",
+    repoUrl: "https://github.com/mhsatgit/Cursorly",
+    module: "Mobile-to-PC Input Engine",
+    channel: "WS · ADB · RFCOMM · HID",
+    state: "Win32 SendInput + 1ms timer",
+    archNodes: ["Android / Browser", "1€ Filter + Gestures", "Windows Host Input"],
     codeHtml:
-      `<span class="tok-cm"># Cursorly — Adaptive One Euro jitter filter</span>\n` +
-      `<span class="tok-kw">def</span> <span class="tok-fn">smooth_pointer</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):\n` +
-      `    cutoff = min_cutoff + beta * speed(dx, dy, dt)\n` +
-      `    fx, fy = filter_x(dx, cutoff), filter_y(dy, cutoff)\n` +
-      `    win32.send_input(accum_x.add(fx), accum_y.add(fy))\n` +
-      `    <span class="tok-kw">return</span> {<span class="tok-str">"transport"</span>: <span class="tok-str">"ws+adb"</span>, <span class="tok-str">"subpixel"</span>: <span class="tok-num">True</span>}`,
+      `<span class="tok-cm"># Cursorly — Adaptive 1€ jitter filter + sub-pixel accumulator</span>\n` +
+      `<span class="tok-kw">def</span> <span class="tok-fn">process_touch_delta</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):\n` +
+      `    fx, fy = one_euro_2d.filter(dx, dy, dt)\n` +
+      `    ix, iy = subpixel_accum.accumulate(fx, fy)\n` +
+      `    win32_mouse.send_relative(ix, iy)\n` +
+      `    <span class="tok-kw">return</span> {<span class="tok-str">"packet"</span>: <span class="tok-str">"!BBffd"</span>, <span class="tok-str">"bytes"</span>: <span class="tok-num">18</span>}`,
   },
   compass: {
-    module: "CompassLink Telemetry",
+    file: "android/.../UsbSensorTransport.kt",
+    repoUrl: "https://github.com/mhsatgit/CompassLink",
+    module: "Quaternion Sensor Bridge",
     channel: "SensorManager · ADB Reverse",
-    state: "Quaternion stream locked",
+    state: "3D Canvas + Windows Input",
+    archNodes: ["Phone SensorManager", "ADB Tunnel :8765", "Node.js + 3D Canvas"],
     codeHtml:
-      `<span class="tok-cm">// CompassLink — Quaternion orientation stream</span>\n` +
+      `<span class="tok-cm">// CompassLink — Normalized [x, y, z, w] orientation stream</span>\n` +
       `<span class="tok-kw">override fun</span> <span class="tok-fn">onSensorChanged</span>(event: <span class="tok-ty">SensorEvent</span>) {\n` +
       `    SensorManager.getQuaternionFromVector(quat, event.values)\n` +
-      `    <span class="tok-kw">val</span> packet = <span class="tok-fn">OrientationFrame</span>(quat[<span class="tok-num">0</span>], quat[<span class="tok-num">1</span>], quat[<span class="tok-num">2</span>], quat[<span class="tok-num">3</span>])\n` +
-      `    adbTunnel.emitJson(packet)\n` +
+      `    <span class="tok-kw">val</span> sample = <span class="tok-fn">OrientationSample</span>(quat[<span class="tok-num">1</span>], quat[<span class="tok-num">2</span>], quat[<span class="tok-num">3</span>], quat[<span class="tok-num">0</span>])\n` +
+      `    adbTcpBridge.emitNdjson(sample)\n` +
       `}`,
   },
-  k3d: {
-    module: "Edge-Core Orchestrator",
-    channel: "K3d · Linux netem",
-    state: "Workload migration ready",
+  fairscore: {
+    file: "apps/api/app/services/explainability.py",
+    repoUrl: "https://github.com/mhsatgit/FairScore",
+    module: "Fair Credit Intelligence",
+    channel: "FastAPI · scikit-learn · Fairlearn",
+    state: "Guarded XAI + Audit UI",
+    archNodes: ["Applicant Input", "RF + Fairlearn Audit", "Next.js Dashboard"],
     codeHtml:
-      `<span class="tok-cm"># VIT Parallax — Dynamic Workload Migration</span>\n` +
-      `<span class="tok-kw">controller</span>: <span class="tok-str">"edge-core-migrator"</span>\n` +
-      `<span class="tok-kw">cluster</span>: <span class="tok-str">"k3d-edge-simulation"</span>\n` +
-      `<span class="tok-kw">network_emulation</span>: <span class="tok-str">"netem-latency-profile"</span>\n` +
-      `<span class="tok-kw">policy</span>: <span class="tok-str">"multi-objective-resource-balance"</span>\n` +
-      `<span class="tok-kw">target_tier</span>: [<span class="tok-str">"edge"</span>, <span class="tok-str">"core"</span>, <span class="tok-str">"cloud"</span>]`,
+      `<span class="tok-cm"># FairScore — Semantically guarded local explanations</span>\n` +
+      `<span class="tok-kw">if</span> feature_name <span class="tok-kw">in</span> EXCLUDED_EXPLANATION_FEATURES:\n` +
+      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># keep age/status out of credit reasons</span>\n` +
+      `semantic_impact = <span class="tok-fn">_semantic_impact</span>(feature_name, value)\n` +
+      `<span class="tok-kw">if</span> semantic_impact <span class="tok-kw">and</span> semantic_impact != model_impact:\n` +
+      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># suppress non-monotonic polarity conflict</span>`,
   },
 };
 
@@ -138,25 +147,11 @@ function applyPortfolioConfig() {
   document.querySelectorAll("[data-project-link]").forEach((anchor) => {
     const key = anchor.getAttribute("data-project-link");
     const project = projects[key];
-    if (!project) return;
+    if (!project || !project.repoUrl) return;
 
-    if (project.repoUrl) {
-      anchor.setAttribute("href", project.repoUrl);
-      anchor.setAttribute("target", "_blank");
-      anchor.setAttribute("rel", "noopener noreferrer");
-      const label = anchor.querySelector(".project-cta-label");
-      if (label) label.textContent = "View on GitHub";
-    } else {
-      anchor.setAttribute("href", owner.githubUrl);
-      anchor.setAttribute("target", "_blank");
-      anchor.setAttribute("rel", "noopener noreferrer");
-      anchor.addEventListener("click", (event) => {
-        event.preventDefault();
-        showToast(
-          `${project.title} repo URL is configurable in js/script.js (PORTFOLIO_CONFIG.projects.${key}.repoUrl).`
-        );
-      });
-    }
+    anchor.setAttribute("href", project.repoUrl);
+    anchor.setAttribute("target", "_blank");
+    anchor.setAttribute("rel", "noopener noreferrer");
   });
 
   document.querySelectorAll("[data-project-demo]").forEach((anchor) => {
@@ -184,8 +179,7 @@ function initNavigation() {
   const progressBar = document.getElementById("scroll-progress-bar");
   const desktopNav = document.querySelector(".desktop-nav");
   const navIndicator = document.getElementById("nav-indicator");
-  const navLinks = document.querySelectorAll(".nav-link, .mobile-nav-link");
-  const sections = document.querySelectorAll("main section[id]");
+  const navLinks = document.querySelectorAll(".nav-link[data-section], .mobile-nav-link[data-section]");
 
   const ringCircumference = 2 * Math.PI * 20;
   let mobileCloseTimer = null;
@@ -296,10 +290,18 @@ function initNavigation() {
     navIndicator.classList.add("is-ready");
   };
 
-  const trackedSections = Array.from(sections).filter((sec) => {
-    const id = sec.getAttribute("id");
-    return id && id !== "certifications" && id !== "dsa";
-  });
+  // Track sections corresponding to nav links on the current page
+  const navIds = Array.from(
+    new Set(
+      Array.from(navLinks)
+        .map((l) => l.getAttribute("data-section"))
+        .filter(Boolean)
+    )
+  );
+  const trackedSections = navIds
+    .map((id) => document.getElementById(id))
+    .filter(Boolean)
+    .sort((a, b) => a.offsetTop - b.offsetTop);
 
   if (navLinks.length && trackedSections.length) {
     const trackedIds = new Set(trackedSections.map((sec) => sec.id));
@@ -472,14 +474,14 @@ function initScrollReveals() {
     return;
   }
 
-  const heroReveals = document.querySelectorAll("#home .reveal");
-  const heroSet = new Set(heroReveals);
+  const aboveFoldReveals = document.querySelectorAll("#home .reveal");
+  const immediateSet = new Set(aboveFoldReveals);
 
   window.requestAnimationFrame(() => {
-    heroReveals.forEach((el) => el.classList.add("is-revealed"));
+    aboveFoldReveals.forEach((el) => el.classList.add("is-revealed"));
   });
 
-  const pending = new Set(targets.filter((el) => !heroSet.has(el)));
+  const pending = new Set(targets.filter((el) => !immediateSet.has(el)));
 
   const observer = new IntersectionObserver(
     (entries, obs) => {
@@ -526,9 +528,16 @@ function initScrollReveals() {
 function initHeroWorkbench() {
   const tabs = document.querySelectorAll(".workbench-tab");
   const codeEl = document.getElementById("workbench-code");
+  const fileEl = document.getElementById("workbench-file");
+  const repoLinkEl = document.getElementById("workbench-repo-link");
   const modEl = document.getElementById("telemetry-module");
   const chanEl = document.getElementById("telemetry-channel");
   const stateEl = document.getElementById("telemetry-state");
+  const archNodes = [
+    document.getElementById("arch-node-1"),
+    document.getElementById("arch-node-2"),
+    document.getElementById("arch-node-3"),
+  ];
 
   if (!tabs.length || !codeEl) return;
   let switchTimer = null;
@@ -547,9 +556,16 @@ function initHeroWorkbench() {
 
       const applySwap = () => {
         codeEl.innerHTML = `<code>${data.codeHtml}</code>`;
+        if (fileEl) fileEl.textContent = data.file;
+        if (repoLinkEl) repoLinkEl.setAttribute("href", data.repoUrl);
         if (modEl) modEl.textContent = data.module;
         if (chanEl) chanEl.textContent = data.channel;
         if (stateEl) stateEl.textContent = data.state;
+        if (Array.isArray(data.archNodes)) {
+          data.archNodes.forEach((label, idx) => {
+            if (archNodes[idx]) archNodes[idx].textContent = label;
+          });
+        }
         codeEl.classList.remove("is-switching");
       };
 
@@ -560,6 +576,32 @@ function initHeroWorkbench() {
         codeEl.classList.add("is-switching");
         switchTimer = window.setTimeout(applySwap, 130);
       }
+    });
+  });
+}
+
+function initPreviewModeTabs() {
+  const groups = document.querySelectorAll(".project-preview");
+  groups.forEach((preview) => {
+    const tabs = preview.querySelectorAll(".preview-mode-tab[data-preview-target]");
+    const panes = preview.querySelectorAll(".preview-pane");
+    if (!tabs.length || !panes.length) return;
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const targetId = tab.getAttribute("data-preview-target");
+        tabs.forEach((t) => {
+          const active = t === tab;
+          t.classList.toggle("is-active", active);
+          t.setAttribute("aria-selected", String(active));
+        });
+        panes.forEach((pane) => {
+          const match = pane.id === targetId;
+          pane.classList.toggle("is-active", match);
+          if (match) pane.removeAttribute("hidden");
+          else pane.setAttribute("hidden", "");
+        });
+      });
     });
   });
 }
@@ -598,7 +640,7 @@ function initInteractiveCards() {
         }
         const nx = (x / rect.width - 0.5) * 2;
         const ny = (y / rect.height - 0.5) * 2;
-        const maxTilt = card.classList.contains("project-card--featured") ? 1.8 : 2.5;
+        const maxTilt = card.classList.contains("project-card--featured") ? 1.6 : 2.3;
         const tiltY = nx * maxTilt;
         const tiltX = -ny * maxTilt;
         card.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
@@ -1026,6 +1068,8 @@ function initSmartwatchPreview() {
     });
   });
 
+  if (!timeEl && !dateEl) return;
+
   const updateWatchClock = () => {
     const now = new Date();
     if (timeEl) {
@@ -1128,6 +1172,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initScrollReveals();
   initHeroWorkbench();
+  initPreviewModeTabs();
   initInteractiveCards();
   initMagneticAndRipples();
   initCursorlyTrackpad();

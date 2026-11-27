@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mohamedhashinjesni123-ux.github.io/sitemap.xml
