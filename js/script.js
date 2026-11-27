@@ -18,20 +18,20 @@ const PORTFOLIO_CONFIG = {
   projects: {
     cursorly: {
       title: "Cursorly",
-      repoUrl: "https://github.com/mhsatgit/Cursorly",
+      repoUrl: "https://github.com/mhsatgit/cursorly",
     },
     compasslink: {
       title: "CompassLink",
-      repoUrl: "https://github.com/mhsatgit/CompassLink",
+      repoUrl: "https://github.com/mhsatgit/compasslink",
     },
     fairscore: {
       title: "FairScore",
-      repoUrl: "https://github.com/mhsatgit/FairScore",
+      repoUrl: "https://github.com/mhsatgit/fairscore",
       liveUrl: "https://mhsatgit.github.io/fairscore/",
     },
     smartwatch: {
       title: "Smartwatch UI Replica",
-      repoUrl: "https://github.com/mhsatgit/SmartWatch",
+      repoUrl: "https://github.com/mhsatgit/smartwatch",
       liveUrl: "https://mhsatgit.github.io/smartwatch/",
     },
   },
@@ -40,7 +40,7 @@ const PORTFOLIO_CONFIG = {
 const WORKBENCH_MODULES = {
   cursorly: {
     file: "cursorly/engine/filter_one_euro.py",
-    repoUrl: "https://github.com/mhsatgit/Cursorly",
+    repoUrl: "https://github.com/mhsatgit/cursorly",
     module: "Mobile-to-PC Input Engine",
     channel: "WS · ADB · RFCOMM · HID",
     state: "Win32 SendInput + 1ms timer",
@@ -55,7 +55,7 @@ const WORKBENCH_MODULES = {
   },
   compass: {
     file: "android/.../UsbSensorTransport.kt",
-    repoUrl: "https://github.com/mhsatgit/CompassLink",
+    repoUrl: "https://github.com/mhsatgit/compasslink",
     module: "Quaternion Sensor Bridge",
     channel: "SensorManager · ADB Reverse",
     state: "3D Canvas + Windows Input",
@@ -72,7 +72,7 @@ const WORKBENCH_MODULES = {
   },
   fairscore: {
     file: "apps/api/app/services/explainability.py",
-    repoUrl: "https://github.com/mhsatgit/FairScore",
+    repoUrl: "https://github.com/mhsatgit/fairscore",
     module: "Fair Credit Intelligence",
     channel: "FastAPI · scikit-learn · Fairlearn",
     state: "Guarded XAI + Audit UI",
