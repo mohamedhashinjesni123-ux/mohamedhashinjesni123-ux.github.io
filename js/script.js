@@ -46,8 +46,8 @@ const WORKBENCH_MODULES = {
     state: "Win32 SendInput + 1ms timer",
     archNodes: ["Android / Browser", "1€ Filter + Gestures", "Windows Host Input"],
     codeHtml:
-      `<span class="tok-cm"># Cursorly — Adaptive 1€ jitter filter + sub-pixel accumulator</span>\n` +
-      `<span class="tok-kw">def</span> <span class="tok-fn">process_touch_delta</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):\n` +
+      `<span class="tok-cm"># Cursorly — Adaptive 1€ filter + sub-pixel</span>\n` +
+      `<span class="tok-kw">def</span> <span class="tok-fn">process_delta</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):\n` +
       `    fx, fy = one_euro_2d.filter(dx, dy, dt)\n` +
       `    ix, iy = subpixel_accum.accumulate(fx, fy)\n` +
       `    win32_mouse.send_relative(ix, iy)\n` +
@@ -61,11 +61,13 @@ const WORKBENCH_MODULES = {
     state: "3D Canvas + Windows Input",
     archNodes: ["Phone SensorManager", "ADB Tunnel :8765", "Node.js + 3D Canvas"],
     codeHtml:
-      `<span class="tok-cm">// CompassLink — Normalized [x, y, z, w] orientation stream</span>\n` +
-      `<span class="tok-kw">override fun</span> <span class="tok-fn">onSensorChanged</span>(event: <span class="tok-ty">SensorEvent</span>) {\n` +
-      `    SensorManager.getQuaternionFromVector(quat, event.values)\n` +
-      `    <span class="tok-kw">val</span> sample = <span class="tok-fn">OrientationSample</span>(quat[<span class="tok-num">1</span>], quat[<span class="tok-num">2</span>], quat[<span class="tok-num">3</span>], quat[<span class="tok-num">0</span>])\n` +
-      `    adbTcpBridge.emitNdjson(sample)\n` +
+      `<span class="tok-cm">// CompassLink — [x, y, z, w] orientation stream</span>\n` +
+      `<span class="tok-kw">override fun</span> <span class="tok-fn">onSensorChanged</span>(ev: <span class="tok-ty">SensorEvent</span>) {\n` +
+      `    SensorManager.getQuaternionFromVector(\n` +
+      `        q, ev.values\n` +
+      `    )\n` +
+      `    <span class="tok-kw">val</span> f = <span class="tok-fn">Orientation</span>(q[<span class="tok-num">1</span>], q[<span class="tok-num">2</span>], q[<span class="tok-num">3</span>], q[<span class="tok-num">0</span>])\n` +
+      `    adbTcpBridge.emitNdjson(f)\n` +
       `}`,
   },
   fairscore: {
@@ -76,12 +78,12 @@ const WORKBENCH_MODULES = {
     state: "Guarded XAI + Audit UI",
     archNodes: ["Applicant Input", "RF + Fairlearn Audit", "Next.js Dashboard"],
     codeHtml:
-      `<span class="tok-cm"># FairScore — Semantically guarded local explanations</span>\n` +
-      `<span class="tok-kw">if</span> feature_name <span class="tok-kw">in</span> EXCLUDED_EXPLANATION_FEATURES:\n` +
-      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># keep age/status out of credit reasons</span>\n` +
-      `semantic_impact = <span class="tok-fn">_semantic_impact</span>(feature_name, value)\n` +
-      `<span class="tok-kw">if</span> semantic_impact <span class="tok-kw">and</span> semantic_impact != model_impact:\n` +
-      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># suppress non-monotonic polarity conflict</span>`,
+      `<span class="tok-cm"># FairScore — Guarded local explanations</span>\n` +
+      `<span class="tok-kw">if</span> feat <span class="tok-kw">in</span> EXCLUDED_EXPLANATION_FEATURES:\n` +
+      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># omit protected attributes</span>\n` +
+      `sem = <span class="tok-fn">_semantic_impact</span>(feat, value)\n` +
+      `<span class="tok-kw">if</span> sem <span class="tok-kw">and</span> sem != model_impact:\n` +
+      `    <span class="tok-kw">continue</span>  <span class="tok-cm"># suppress polarity conflict</span>`,
   },
 };
 
@@ -1043,59 +1045,159 @@ function initCompassCanvas() {
   ensureRunning();
 }
 
-function initSmartwatchPreview() {
-  const tabs = document.querySelectorAll(".watch-tab");
-  const views = document.querySelectorAll(".watch-view");
-  const tiles = document.querySelectorAll(".watch-tile");
-  const timeEl = document.getElementById("watch-time");
-  const dateEl = document.getElementById("watch-date");
+function initSmartwatchGallery() {
+  const tabs = document.querySelectorAll(".watch-tab[data-watch-shot]");
+  const img = document.getElementById("watch-demo-img");
+  const caption = document.getElementById("watch-demo-caption");
+
+  if (!tabs.length || !img) return;
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      const target = tab.getAttribute("data-watch-screen");
-      tabs.forEach((t) => t.classList.toggle("is-active", t === tab));
-      views.forEach((v) =>
-        v.classList.toggle("is-active", v.getAttribute("data-screen") === target)
-      );
+      const nextSrc = tab.getAttribute("data-watch-shot");
+      const nextAlt = tab.getAttribute("data-watch-alt") || "";
+      const nextCaption = tab.getAttribute("data-watch-caption") || "";
+      if (!nextSrc) return;
+
+      tabs.forEach((t) => {
+        const active = t === tab;
+        t.classList.toggle("is-active", active);
+        t.setAttribute("aria-selected", String(active));
+      });
+
+      img.setAttribute("src", nextSrc);
+      img.setAttribute("alt", nextAlt);
+      if (caption) caption.textContent = nextCaption;
     });
   });
+}
 
-  tiles.forEach((tile) => {
-    tile.addEventListener("click", () => {
-      const next = !tile.classList.contains("is-on");
-      tile.classList.toggle("is-on", next);
-      tile.setAttribute("aria-pressed", String(next));
+function initOrbitSimulationReplay() {
+  const img = document.getElementById("orbit-demo-img");
+  const badge = document.getElementById("orbit-stage-badge");
+  const caption = document.getElementById("orbit-stage-caption");
+  const playBtn = document.getElementById("orbit-play-btn");
+  const stepBtns = document.querySelectorAll(".orbit-step-btn[data-orbit-step]");
+
+  if (!img || !stepBtns.length) return;
+
+  const stages = [
+    {
+      src: "assets/projects/orbit/frame-1.webp",
+      alt: "ORBIT Edge-Core workload orchestrator steady state with inference-api on core-1",
+      badge: "1 / 4 · Steady State",
+      caption: "inference-api running on core-1",
+    },
+    {
+      src: "assets/projects/orbit/frame-2.webp",
+      alt: "ORBIT surge forecast showing chennai spike expected above capacity cap",
+      badge: "2 / 4 · Surge Forecast",
+      caption: "Chennai +60s forecast exceeds 600 cap",
+    },
+    {
+      src: "assets/projects/orbit/frame-3.webp",
+      alt: "ORBIT rolling migration moving inference-api from core-1 to edge-chennai with zero dropped requests",
+      badge: "3 / 4 · Core → Edge",
+      caption: "PREDICTIVE_PREWARM: core-1 → edge-chennai",
+    },
+    {
+      src: "assets/projects/orbit/frame-5.webp",
+      alt: "ORBIT stabilized edge-chennai serving inference-api with improved 9.2ms p95 latency",
+      badge: "4 / 4 · SLA Stabilized",
+      caption: "inference-api active on edge-chennai (9.2ms p95)",
+    },
+  ];
+
+  let current = 0;
+  let playing = !prefersReducedMotion();
+  let inView = false;
+  let timerId = null;
+
+  const renderStage = (index) => {
+    current = (index + stages.length) % stages.length;
+    const stage = stages[current];
+    img.setAttribute("src", stage.src);
+    img.setAttribute("alt", stage.alt);
+    if (badge) badge.textContent = stage.badge;
+    if (caption) caption.textContent = stage.caption;
+    stepBtns.forEach((btn, idx) => {
+      const active = idx === current;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-selected", String(active));
     });
-  });
+  };
 
-  if (!timeEl && !dateEl) return;
-
-  const updateWatchClock = () => {
-    const now = new Date();
-    if (timeEl) {
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      const formattedTime = `${hh}:${mm}`;
-      if (timeEl.textContent !== formattedTime) {
-        timeEl.textContent = formattedTime;
-      }
-    }
-    if (dateEl) {
-      const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-      const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-      const formattedDate = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
-      if (dateEl.textContent !== formattedDate) {
-        dateEl.textContent = formattedDate;
-      }
+  const syncPlayButton = () => {
+    if (!playBtn) return;
+    playBtn.setAttribute("aria-pressed", String(playing));
+    playBtn.setAttribute("aria-label", playing ? "Pause simulation playback" : "Play simulation playback");
+    const label = playBtn.querySelector("span");
+    const icon = playBtn.querySelector("svg, i");
+    if (label) label.textContent = playing ? "Auto" : "Paused";
+    if (icon && window.lucide && typeof window.lucide.createIcons === "function") {
+      const nextIcon = document.createElement("i");
+      nextIcon.setAttribute("data-lucide", playing ? "pause" : "play");
+      nextIcon.setAttribute("aria-hidden", "true");
+      icon.replaceWith(nextIcon);
+      window.lucide.createIcons({ nodes: [playBtn] });
     }
   };
 
-  updateWatchClock();
-  window.setInterval(updateWatchClock, 1000);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) updateWatchClock();
+  const stopTimer = () => {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  };
+
+  const startTimer = () => {
+    stopTimer();
+    if (!playing || !inView || document.hidden || prefersReducedMotion()) return;
+    timerId = window.setInterval(() => {
+      renderStage(current + 1);
+    }, 1700);
+  };
+
+  stepBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.getAttribute("data-orbit-step"));
+      playing = false;
+      stopTimer();
+      syncPlayButton();
+      renderStage(idx);
+    });
   });
-  window.addEventListener("focus", updateWatchClock);
+
+  if (playBtn) {
+    playBtn.addEventListener("click", () => {
+      playing = !playing;
+      syncPlayButton();
+      if (playing) startTimer();
+      else stopTimer();
+    });
+  }
+
+  if ("IntersectionObserver" in window) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        inView = entries[0].isIntersecting;
+        if (inView) startTimer();
+        else stopTimer();
+      },
+      { threshold: 0.2 }
+    );
+    obs.observe(img);
+  } else {
+    inView = true;
+    startTimer();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopTimer();
+    else startTimer();
+  });
+
+  syncPlayButton();
 }
 
 function initCopyEmail() {
@@ -1177,7 +1279,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initMagneticAndRipples();
   initCursorlyTrackpad();
   initCompassCanvas();
-  initSmartwatchPreview();
+  initSmartwatchGallery();
+  initOrbitSimulationReplay();
   initCopyEmail();
 
   if (window.lucide && typeof window.lucide.createIcons === "function") {

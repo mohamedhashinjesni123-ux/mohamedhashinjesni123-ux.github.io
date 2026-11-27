@@ -242,8 +242,8 @@
                   </a>
                 </div>
 
-                <pre class="workbench-code" id="workbench-code"><code><span class="tok-cm"># Cursorly — Adaptive 1€ jitter filter + sub-pixel accumulator</span>
-<span class="tok-kw">def</span> <span class="tok-fn">process_touch_delta</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):
+                <pre class="workbench-code" id="workbench-code"><code><span class="tok-cm"># Cursorly — Adaptive 1€ filter + sub-pixel</span>
+<span class="tok-kw">def</span> <span class="tok-fn">process_delta</span>(dx: <span class="tok-ty">float</span>, dy: <span class="tok-ty">float</span>, dt: <span class="tok-ty">float</span>):
     fx, fy = one_euro_2d.filter(dx, dy, dt)
     ix, iy = subpixel_accum.accumulate(fx, fy)
     win32_mouse.send_relative(ix, iy)
@@ -687,72 +687,32 @@
             <article class="project-card project-card--compact reveal">
               <div class="project-preview project-preview--watch">
                 <div class="preview-chrome">
-                  <span class="preview-label">FT_A9508 REPLICA // UI SIMULATION</span>
-                  <div class="preview-mode-tabs" role="tablist" aria-label="SmartWatch preview mode">
-                    <button type="button" class="preview-mode-tab is-active" data-preview-target="watch-sim" role="tab" aria-selected="true">Interactive</button>
-                    <button type="button" class="preview-mode-tab" data-preview-target="watch-shot" role="tab" aria-selected="false">Live App</button>
+                  <span class="preview-label">SMARTWATCH // LIVE WEB DEMO</span>
+                  <div class="watch-screen-tabs" role="tablist" aria-label="SmartWatch live demo screens">
+                    <button type="button" class="watch-tab is-active" data-watch-shot="assets/projects/smartwatch/watch-face.webp" data-watch-alt="SmartWatch live web demo woken green X watch face" data-watch-caption="Watch Face — Woken from AOD via MENU" role="tab" aria-selected="true">Face</button>
+                    <button type="button" class="watch-tab" data-watch-shot="assets/projects/smartwatch/app-drawer.webp" data-watch-alt="SmartWatch live web demo 21-app grid drawer" data-watch-caption="21-App Drawer — Custom SVG app grid" role="tab" aria-selected="false">Apps</button>
+                    <button type="button" class="watch-tab" data-watch-shot="assets/projects/smartwatch/activity-health.webp" data-watch-alt="SmartWatch live web demo Activity and Health metrics screen" data-watch-caption="Activity &amp; Stats — Simulated steps, calories &amp; active hrs" role="tab" aria-selected="false">Stats</button>
+                    <button type="button" class="watch-tab" data-watch-shot="assets/projects/smartwatch/quick-settings.webp" data-watch-alt="SmartWatch live web demo Quick Settings controls panel" data-watch-caption="Quick Settings — Battery, DND, brightness &amp; toggles" role="tab" aria-selected="false">Quick</button>
+                    <button type="button" class="watch-tab" data-watch-shot="assets/projects/smartwatch/sports.webp" data-watch-alt="SmartWatch live web demo Recent Multisport workouts menu" data-watch-caption="Multisport — Indoor Walk, Outdoor Run &amp; Outdoor Walk" role="tab" aria-selected="false">Sports</button>
+                    <button type="button" class="watch-tab" data-watch-shot="assets/projects/smartwatch/notifications.webp" data-watch-alt="SmartWatch live web demo Notifications screen" data-watch-caption="Notifications — Swipe Up view from watch face" role="tab" aria-selected="false">Alerts</button>
                   </div>
                 </div>
 
-                <div class="preview-pane is-active" id="watch-sim">
-                  <div class="preview-subbar">
-                    <span class="preview-kind-badge">Interactive Screen Switcher</span>
-                    <div class="watch-screen-tabs" role="group" aria-label="Smartwatch screens">
-                      <button type="button" class="watch-tab is-active" data-watch-screen="face">Face</button>
-                      <button type="button" class="watch-tab" data-watch-screen="activity">Stats</button>
-                      <button type="button" class="watch-tab" data-watch-screen="controls">Quick</button>
-                    </div>
-                  </div>
-
-                  <div class="watch-stage">
-                    <div class="watch-body">
-                      <span class="watch-crown" aria-hidden="true"></span>
-                      <div class="watch-bezel">
-                        <div class="watch-screen" id="watch-screen">
-                          <div class="watch-view is-active" data-screen="face">
-                            <span class="watch-date" id="watch-date">---</span>
-                            <span class="watch-time" id="watch-time">--:--</span>
-                            <div class="watch-mini-stats">
-                              <span><i data-lucide="heart" aria-hidden="true"></i> 72</span>
-                              <span><i data-lucide="footprints" aria-hidden="true"></i> 6.4k</span>
-                            </div>
-                          </div>
-
-                          <div class="watch-view" data-screen="activity">
-                            <span class="watch-sub-title">ACTIVITY</span>
-                            <div class="watch-rings" aria-hidden="true">
-                              <span class="ring ring--outer"></span>
-                              <span class="ring ring--inner"></span>
-                            </div>
-                            <span class="watch-stat-line">320 kcal &middot; 42 min</span>
-                          </div>
-
-                          <div class="watch-view" data-screen="controls">
-                            <span class="watch-sub-title">QUICK PANEL</span>
-                            <div class="watch-tiles">
-                              <button type="button" class="watch-tile is-on" aria-pressed="true" aria-label="Toggle Bluetooth"><i data-lucide="bluetooth" aria-hidden="true"></i></button>
-                              <button type="button" class="watch-tile" aria-pressed="false" aria-label="Toggle Do Not Disturb"><i data-lucide="moon" aria-hidden="true"></i></button>
-                              <button type="button" class="watch-tile is-on" aria-pressed="true" aria-label="Toggle Brightness"><i data-lucide="sun" aria-hidden="true"></i></button>
-                              <button type="button" class="watch-tile" aria-pressed="false" aria-label="Toggle Alerts"><i data-lucide="bell" aria-hidden="true"></i></button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div class="preview-subbar">
+                  <span class="preview-kind-badge preview-kind-badge--real">Live Demo Capture</span>
+                  <span class="preview-caption-mini" id="watch-demo-caption">Watch Face — Woken from AOD via MENU</span>
                 </div>
 
-                <div class="preview-pane" id="watch-shot" hidden>
-                  <figure class="shot-frame">
-                    <img
-                      src="assets/projects/smartwatch/watch-face.webp"
-                      alt="SmartWatch live browser simulation showing Fastrack FT_A9508 hardware bezel, green X watch face, and directional navigation controls"
-                      width="1280"
-                      height="800"
-                      loading="lazy"
-                    />
-                  </figure>
-                </div>
+                <figure class="shot-frame">
+                  <img
+                    id="watch-demo-img"
+                    src="assets/projects/smartwatch/watch-face.webp"
+                    alt="SmartWatch live web demo woken green X watch face"
+                    width="1280"
+                    height="800"
+                    decoding="async"
+                  />
+                </figure>
               </div>
 
               <div class="project-info">
@@ -914,6 +874,7 @@
             <li>Git</li>
             <li>GitHub</li>
             <li>VS Code</li>
+            <li>Android Studio</li>
             <li>Linux / WSL</li>
           </ul>
         </div>
@@ -923,22 +884,24 @@
     <!-- ==================== 4. ABOUT & EDUCATION ==================== -->
     <section class="section" id="about" aria-labelledby="about-heading">
       <div class="container">
-        <div class="section-header reveal">
-          <span class="section-eyebrow">03 / ABOUT &amp; EDUCATION</span>
-          <h2 id="about-heading" class="section-title">How I Build &amp; Learn.</h2>
-        </div>
-
         <div class="about-layout">
-          <div class="about-narrative reveal">
-            <p>
-              I&rsquo;m a Computer Science and Engineering undergraduate at Chennai Institute of Technology, focused on building reliable software systems from first principles.
-            </p>
-            <p>
-              Rather than keeping ideas purely theoretical, I enjoy connecting layers together &mdash; pairing mobile hardware sensors and unbuffered touch capture with low-latency desktop engines, or auditing machine learning pipelines for transparency and fairness.
-            </p>
-            <p>
-              My focus areas span full-stack engineering, applied machine learning, Android-to-PC systems, and algorithmic problem solving.
-            </p>
+          <div class="about-main">
+            <div class="section-header reveal">
+              <span class="section-eyebrow">03 / ABOUT &amp; EDUCATION</span>
+              <h2 id="about-heading" class="section-title">How I Build &amp; Learn.</h2>
+            </div>
+
+            <div class="about-narrative reveal">
+              <p>
+                I&rsquo;m a Computer Science and Engineering undergraduate at Chennai Institute of Technology, focused on building reliable software systems from first principles.
+              </p>
+              <p>
+                Rather than keeping ideas purely theoretical, I enjoy connecting layers together &mdash; pairing mobile hardware sensors and unbuffered touch capture with low-latency desktop engines, or auditing machine learning pipelines for transparency and fairness.
+              </p>
+              <p>
+                My focus areas span full-stack engineering, applied machine learning, Android-to-PC systems, and algorithmic problem solving.
+              </p>
+            </div>
           </div>
 
           <aside class="education-panel reveal" aria-label="Education details">
@@ -1025,54 +988,56 @@
                 </li>
               </ul>
             </div>
+
+            <div class="achievement-actions">
+              <a
+                href="https://orbit.aayu.sh/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-primary"
+              >
+                <i data-lucide="globe" aria-hidden="true"></i>
+                <span>Live Demo &mdash; orbit.aayu.sh</span>
+                <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+              </a>
+            </div>
           </div>
 
-          <!-- Architecture-inspired Edge-Core-Cloud Simulation Visualization -->
-          <div class="achievement-visual" aria-label="Simulated Edge-Core-Cloud workload migration topology">
-            <div class="arch-header">
-              <span class="preview-label">SIMULATION TOPOLOGY // K3D + NETEM</span>
+          <!-- Recorded Edge-Core Workload Movement Demo from orbit.aayu.sh -->
+          <div class="achievement-visual" aria-label="Recorded Edge-Core workload migration simulation from orbit.aayu.sh">
+            <div class="preview-chrome">
+              <span class="preview-label">ORBIT.AAYU.SH // EDGE &#8644; CORE RECORDING</span>
+              <div class="orbit-controls">
+                <button type="button" class="orbit-play-btn" id="orbit-play-btn" aria-pressed="true" aria-label="Pause simulation playback">
+                  <i data-lucide="pause" aria-hidden="true"></i>
+                  <span>Auto</span>
+                </button>
+              </div>
             </div>
-            <svg class="arch-diagram" viewBox="0 0 420 280" fill="none" role="img" aria-label="Workload migration path across simulated Edge Nodes, Migration Controller, and Core/Cloud Nodes">
-              <path class="arch-link" d="M90 76 L210 140" />
-              <path class="arch-link" d="M90 204 L210 140" />
-              <path class="arch-link arch-link--active" d="M210 140 L330 76" />
-              <path class="arch-link arch-link--active" d="M210 140 L330 204" />
 
-              <g>
-                <rect x="24" y="46" width="116" height="58" rx="10" class="arch-box" />
-                <text x="82" y="72" text-anchor="middle" class="arch-title">EDGE NODE A</text>
-                <text x="82" y="90" text-anchor="middle" class="arch-sub">netem latency</text>
-              </g>
-              <g>
-                <rect x="24" y="176" width="116" height="58" rx="10" class="arch-box" />
-                <text x="82" y="202" text-anchor="middle" class="arch-title">EDGE NODE B</text>
-                <text x="82" y="220" text-anchor="middle" class="arch-sub">load threshold</text>
-              </g>
+            <div class="orbit-stage">
+              <figure class="shot-frame">
+                <img
+                  id="orbit-demo-img"
+                  src="assets/projects/orbit/frame-1.webp"
+                  alt="ORBIT Edge-Core workload orchestrator steady state with inference-api on core-1"
+                  width="1680"
+                  height="1050"
+                  loading="lazy"
+                />
+              </figure>
+              <div class="orbit-status-row">
+                <span class="preview-kind-badge preview-kind-badge--real" id="orbit-stage-badge">1 / 4 · Steady State</span>
+                <span class="preview-caption-mini" id="orbit-stage-caption">inference-api running on core-1</span>
+              </div>
+            </div>
 
-              <g>
-                <rect x="144" y="108" width="132" height="64" rx="12" class="arch-box arch-box--controller" />
-                <text x="210" y="137" text-anchor="middle" class="arch-title arch-title--accent">MIGRATION CTRL</text>
-                <text x="210" y="156" text-anchor="middle" class="arch-sub">K3d orchestrator</text>
-              </g>
-
-              <g>
-                <rect x="284" y="46" width="116" height="58" rx="10" class="arch-box" />
-                <text x="342" y="72" text-anchor="middle" class="arch-title">CORE NODE</text>
-                <text x="342" y="90" text-anchor="middle" class="arch-sub">dynamic target</text>
-              </g>
-              <g>
-                <rect x="284" y="176" width="116" height="58" rx="10" class="arch-box" />
-                <text x="342" y="202" text-anchor="middle" class="arch-title">CLOUD TIER</text>
-                <text x="342" y="220" text-anchor="middle" class="arch-sub">simulated overflow</text>
-              </g>
-
-              <circle r="4.5" class="arch-packet">
-                <animateMotion dur="3.4s" repeatCount="indefinite" path="M90 76 L210 140 L330 76" />
-              </circle>
-              <circle r="4.5" class="arch-packet arch-packet--violet">
-                <animateMotion dur="4.2s" repeatCount="indefinite" path="M90 204 L210 140 L330 204" />
-              </circle>
-            </svg>
+            <div class="orbit-steps" role="tablist" aria-label="Edge-Core workload migration stages">
+              <button type="button" class="orbit-step-btn is-active" data-orbit-step="0" role="tab" aria-selected="true">1. Steady</button>
+              <button type="button" class="orbit-step-btn" data-orbit-step="1" role="tab" aria-selected="false">2. Surge</button>
+              <button type="button" class="orbit-step-btn" data-orbit-step="2" role="tab" aria-selected="false">3. Migrate</button>
+              <button type="button" class="orbit-step-btn" data-orbit-step="3" role="tab" aria-selected="false">4. Settled</button>
+            </div>
           </div>
         </article>
       </div>
