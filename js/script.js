@@ -27,12 +27,12 @@ const PORTFOLIO_CONFIG = {
     fairscore: {
       title: "FairScore",
       repoUrl: "https://github.com/mhsatgit/FairScore",
-      liveUrl: "https://mhsatgit.github.io/FairScore/",
+      liveUrl: "https://mhsatgit.github.io/fairscore/",
     },
     smartwatch: {
       title: "Smartwatch UI Replica",
       repoUrl: "https://github.com/mhsatgit/SmartWatch",
-      liveUrl: "https://mhsatgit.github.io/SmartWatch/",
+      liveUrl: "https://mhsatgit.github.io/smartwatch/",
     },
   },
 };
@@ -170,6 +170,45 @@ function applyPortfolioConfig() {
   if (yearEl) {
     yearEl.textContent = String(new Date().getFullYear());
   }
+}
+
+function initThemeToggle() {
+  const STORAGE_KEY = "portfolio-theme";
+  const root = document.documentElement;
+  const toggleBtn = document.getElementById("theme-toggle");
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+  const getCurrentTheme = () =>
+    root.getAttribute("data-theme") === "light" ? "light" : "dark";
+
+  const syncThemeUI = (theme) => {
+    const isLight = theme === "light";
+    root.setAttribute("data-theme", theme);
+    if (themeMeta) {
+      themeMeta.setAttribute("content", isLight ? "#ffffff" : "#070709");
+    }
+    if (toggleBtn) {
+      const nextLabel = isLight ? "Switch to dark mode" : "Switch to light mode";
+      toggleBtn.setAttribute("aria-pressed", String(isLight));
+      toggleBtn.setAttribute("aria-label", nextLabel);
+      toggleBtn.setAttribute("title", nextLabel);
+    }
+  };
+
+  syncThemeUI(getCurrentTheme());
+
+  if (!toggleBtn) return;
+
+  toggleBtn.addEventListener("click", () => {
+    const nextTheme = getCurrentTheme() === "light" ? "dark" : "light";
+    syncThemeUI(nextTheme);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    } catch {
+      // Ignore storage errors in restricted browsing contexts
+    }
+    document.dispatchEvent(new CustomEvent("portfolio:themechange", { detail: { theme: nextTheme } }));
+  });
 }
 
 function initNavigation() {
@@ -946,11 +985,12 @@ function initCompassCanvas() {
   };
 
   const drawFrame = () => {
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
     ctx.beginPath();
     ctx.ellipse(logicalWidth / 2, logicalHeight / 2 + 6, 110, 32, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(248, 113, 113, 0.18)";
+    ctx.strokeStyle = isLight ? "rgba(220, 38, 38, 0.22)" : "rgba(248, 113, 113, 0.18)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -963,9 +1003,9 @@ function initCompassCanvas() {
       ctx.lineTo(projScreen[i][0], projScreen[i][1]);
     }
     ctx.closePath();
-    ctx.fillStyle = "rgba(239, 68, 68, 0.14)";
+    ctx.fillStyle = isLight ? "rgba(220, 38, 38, 0.11)" : "rgba(239, 68, 68, 0.14)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(251, 113, 133, 0.5)";
+    ctx.strokeStyle = isLight ? "rgba(185, 28, 28, 0.55)" : "rgba(251, 113, 133, 0.5)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -974,7 +1014,7 @@ function initCompassCanvas() {
       ctx.moveTo(proj[a][0], proj[a][1]);
       ctx.lineTo(proj[b][0], proj[b][1]);
     });
-    ctx.strokeStyle = "rgba(245, 245, 247, 0.78)";
+    ctx.strokeStyle = isLight ? "rgba(17, 17, 20, 0.84)" : "rgba(245, 245, 247, 0.78)";
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
@@ -983,13 +1023,13 @@ function initCompassCanvas() {
     ctx.beginPath();
     ctx.moveTo(origin[0], origin[1]);
     ctx.lineTo(zAxis[0], zAxis[1]);
-    ctx.strokeStyle = "#f87171";
+    ctx.strokeStyle = isLight ? "#dc2626" : "#f87171";
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(zAxis[0], zAxis[1], 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = "#f87171";
+    ctx.fillStyle = isLight ? "#dc2626" : "#f87171";
     ctx.fill();
 
     updateTelemetry();
@@ -1041,6 +1081,7 @@ function initCompassCanvas() {
   }
 
   document.addEventListener("visibilitychange", ensureRunning);
+  document.addEventListener("portfolio:themechange", drawFrame);
   drawFrame();
   ensureRunning();
 }
@@ -1271,6 +1312,7 @@ function initCopyEmail() {
 
 document.addEventListener("DOMContentLoaded", () => {
   applyPortfolioConfig();
+  initThemeToggle();
   initNavigation();
   initScrollReveals();
   initHeroWorkbench();

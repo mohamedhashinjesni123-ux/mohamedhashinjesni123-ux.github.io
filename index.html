@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,7 +29,7 @@
   />
   <meta name="twitter:image" content="https://mohamedhashinjesni123-ux.github.io/assets/images/og-preview.svg" />
 
-  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?v=2" />
 
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -40,9 +40,22 @@
   />
 
   <script>
-    document.documentElement.classList.add("js-enabled");
+    (function () {
+      document.documentElement.classList.add("js-enabled");
+      try {
+        var saved = localStorage.getItem("portfolio-theme");
+        var theme = saved === "light" || saved === "dark" ? saved : "dark";
+        document.documentElement.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+          meta.setAttribute("content", theme === "light" ? "#ffffff" : "#070709");
+        }
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
   </script>
-  <link rel="stylesheet" href="css/style.css?v=5" />
+  <link rel="stylesheet" href="css/style.css?v=6" />
 </head>
 <body>
   <div class="scroll-progress" id="scroll-progress" aria-hidden="true">
@@ -76,6 +89,30 @@
       </nav>
 
       <div class="nav-actions">
+        <button
+          type="button"
+          class="theme-toggle"
+          id="theme-toggle"
+          aria-label="Switch to light mode"
+          title="Switch to light mode"
+          aria-pressed="false"
+        >
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+
         <a href="#contact" class="btn btn-nav">
           <span>Let&rsquo;s Connect</span>
           <i data-lucide="arrow-up-right" aria-hidden="true"></i>
@@ -669,7 +706,7 @@
                     <i data-lucide="arrow-up-right" aria-hidden="true"></i>
                   </a>
                   <a
-                    href="https://mhsatgit.github.io/FairScore/"
+                    href="https://mhsatgit.github.io/fairscore/"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-secondary"
@@ -753,7 +790,7 @@
                     <i data-lucide="arrow-up-right" aria-hidden="true"></i>
                   </a>
                   <a
-                    href="https://mhsatgit.github.io/SmartWatch/"
+                    href="https://mhsatgit.github.io/smartwatch/"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-secondary"
@@ -1259,6 +1296,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
-  <script src="js/script.js?v=6" defer></script>
+  <script src="js/script.js?v=7" defer></script>
 </body>
 </html>
