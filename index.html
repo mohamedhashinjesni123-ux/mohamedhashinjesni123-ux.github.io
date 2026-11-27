@@ -31,9 +31,16 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="css/style.css?v=2" />
+  <script>
+    document.documentElement.classList.add("js-enabled");
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true">
+    <span class="scroll-progress-bar" id="scroll-progress-bar"></span>
+  </div>
+  <div class="cursor-follower" id="cursor-follower" aria-hidden="true"></div>
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <!-- Ambient technical background -->
@@ -52,6 +59,7 @@
       </a>
 
       <nav class="desktop-nav" aria-label="Primary navigation">
+        <span class="nav-indicator" id="nav-indicator" aria-hidden="true"></span>
         <a href="#home" class="nav-link is-active" data-section="home">Home</a>
         <a href="#about" class="nav-link" data-section="about">About</a>
         <a href="#projects" class="nav-link" data-section="projects">Projects</a>
@@ -349,7 +357,15 @@
 
         <div class="projects-showcase">
           <!-- PROJECT 01: CURSORLY (Featured Wide Card) -->
-          <article class="project-card project-card--featured reveal">
+          <article class="project-card project-card--featured project-card--cursorly reveal">
+            <div class="project-motif project-motif--cursorly" aria-hidden="true">
+              <svg viewBox="0 0 120 120" fill="none">
+                <circle cx="60" cy="60" r="44" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" />
+                <circle cx="60" cy="60" r="22" stroke="currentColor" stroke-width="1" />
+                <path d="M60 8V22M60 98V112M8 60H22M98 60H112" stroke="currentColor" stroke-width="1" />
+                <circle cx="60" cy="60" r="3" fill="currentColor" />
+              </svg>
+            </div>
             <div class="project-info">
               <div class="project-meta-row">
                 <span class="project-index">PROJECT 01</span>
@@ -441,7 +457,15 @@
           </article>
 
           <!-- PROJECT 02: COMPASSLINK (Featured Wide Card) -->
-          <article class="project-card project-card--featured reveal">
+          <article class="project-card project-card--featured project-card--compass reveal">
+            <div class="project-motif project-motif--compass" aria-hidden="true">
+              <svg viewBox="0 0 140 140" fill="none">
+                <circle cx="70" cy="70" r="56" stroke="currentColor" stroke-width="1" stroke-dasharray="3 5" />
+                <ellipse cx="70" cy="70" rx="56" ry="22" transform="rotate(-24 70 70)" stroke="currentColor" stroke-width="1" />
+                <ellipse cx="70" cy="70" rx="56" ry="22" transform="rotate(32 70 70)" stroke="currentColor" stroke-width="1" />
+                <circle cx="70" cy="14" r="3" fill="currentColor" />
+              </svg>
+            </div>
             <div class="project-info">
               <div class="project-meta-row">
                 <span class="project-index">PROJECT 02</span>
@@ -663,10 +687,10 @@
                         <div class="watch-view" data-screen="controls">
                           <span class="watch-sub-title">QUICK PANEL</span>
                           <div class="watch-tiles">
-                            <span class="watch-tile is-on"><i data-lucide="bluetooth" aria-hidden="true"></i></span>
-                            <span class="watch-tile"><i data-lucide="moon" aria-hidden="true"></i></span>
-                            <span class="watch-tile is-on"><i data-lucide="sun" aria-hidden="true"></i></span>
-                            <span class="watch-tile"><i data-lucide="bell" aria-hidden="true"></i></span>
+                            <button type="button" class="watch-tile is-on" aria-pressed="true" aria-label="Toggle Bluetooth"><i data-lucide="bluetooth" aria-hidden="true"></i></button>
+                            <button type="button" class="watch-tile" aria-pressed="false" aria-label="Toggle Do Not Disturb"><i data-lucide="moon" aria-hidden="true"></i></button>
+                            <button type="button" class="watch-tile is-on" aria-pressed="true" aria-label="Toggle Brightness"><i data-lucide="sun" aria-hidden="true"></i></button>
+                            <button type="button" class="watch-tile" aria-pressed="false" aria-label="Toggle Alerts"><i data-lucide="bell" aria-hidden="true"></i></button>
                           </div>
                         </div>
                       </div>
@@ -1110,12 +1134,16 @@
   </footer>
 
   <button type="button" class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg class="back-to-top-ring" viewBox="0 0 44 44" aria-hidden="true">
+      <circle class="back-to-top-ring-track" cx="22" cy="22" r="20" />
+      <circle class="back-to-top-ring-fill" id="back-to-top-ring-fill" cx="22" cy="22" r="20" />
+    </svg>
     <i data-lucide="arrow-up" aria-hidden="true"></i>
   </button>
 
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
-  <script src="js/script.js?v=3" defer></script>
+  <script src="js/script.js?v=4" defer></script>
 </body>
 </html>

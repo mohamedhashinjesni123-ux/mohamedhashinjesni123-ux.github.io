@@ -79,6 +79,11 @@ const WORKBENCH_MODULES = {
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+const isFinePointerDesktop = () =>
+  window.matchMedia &&
+  window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+  !prefersReducedMotion();
+
 let toastTimeoutId = null;
 
 function showToast(message) {
@@ -175,16 +180,37 @@ function initNavigation() {
   const mobileToggle = document.getElementById("mobile-menu-toggle");
   const mobileNav = document.getElementById("mobile-nav");
   const backToTop = document.getElementById("back-to-top");
+  const backToTopRing = document.getElementById("back-to-top-ring-fill");
+  const progressBar = document.getElementById("scroll-progress-bar");
+  const desktopNav = document.querySelector(".desktop-nav");
+  const navIndicator = document.getElementById("nav-indicator");
   const navLinks = document.querySelectorAll(".nav-link, .mobile-nav-link");
   const sections = document.querySelectorAll("main section[id]");
 
+  const ringCircumference = 2 * Math.PI * 20;
+  let mobileCloseTimer = null;
+
   const setMobileMenuState = (open) => {
     if (!mobileToggle || !mobileNav) return;
+    window.clearTimeout(mobileCloseTimer);
     mobileToggle.setAttribute("aria-expanded", String(open));
+
     if (open) {
       mobileNav.removeAttribute("hidden");
+      window.requestAnimationFrame(() => {
+        mobileNav.classList.add("is-open");
+      });
     } else {
-      mobileNav.setAttribute("hidden", "");
+      mobileNav.classList.remove("is-open");
+      if (prefersReducedMotion()) {
+        mobileNav.setAttribute("hidden", "");
+      } else {
+        mobileCloseTimer = window.setTimeout(() => {
+          if (!mobileNav.classList.contains("is-open")) {
+            mobileNav.setAttribute("hidden", "");
+          }
+        }, 250);
+      }
     }
   };
 
@@ -198,24 +224,53 @@ function initNavigation() {
       link.addEventListener("click", () => setMobileMenuState(false));
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
+    document.addEventListener("click", (event) => {
+      if (
+        mobileToggle.getAttribute("aria-expanded") === "true" &&
+        !mobileNav.contains(event.target) &&
+        !mobileToggle.contains(event.target)
+      ) {
         setMobileMenuState(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && mobileToggle.getAttribute("aria-expanded") === "true") {
+        setMobileMenuState(false);
+        mobileToggle.focus();
       }
     });
   }
 
+  let scrollUiRaf = false;
   const updateScrollUI = () => {
+    scrollUiRaf = false;
     const y = window.scrollY;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const ratio = Math.min(1, Math.max(0, y / maxScroll));
+
     if (header) {
       header.classList.toggle("is-scrolled", y > 24);
     }
     if (backToTop) {
       backToTop.classList.toggle("is-visible", y > 460);
     }
+    if (progressBar) {
+      progressBar.style.transform = `scaleX(${ratio.toFixed(4)})`;
+    }
+    if (backToTopRing) {
+      backToTopRing.style.strokeDashoffset = (ringCircumference * (1 - ratio)).toFixed(2);
+    }
   };
 
-  window.addEventListener("scroll", updateScrollUI, { passive: true });
+  const scheduleScrollUI = () => {
+    if (scrollUiRaf) return;
+    scrollUiRaf = true;
+    window.requestAnimationFrame(updateScrollUI);
+  };
+
+  window.addEventListener("scroll", scheduleScrollUI, { passive: true });
+  window.addEventListener("resize", scheduleScrollUI, { passive: true });
   updateScrollUI();
 
   if (backToTop) {
@@ -227,6 +282,20 @@ function initNavigation() {
     });
   }
 
+  const moveNavIndicator = (activeDesktopLink) => {
+    if (!desktopNav || !navIndicator || !activeDesktopLink) return;
+    if (desktopNav.offsetParent === null) return;
+
+    const width = activeDesktopLink.offsetWidth;
+    const left = activeDesktopLink.offsetLeft;
+    if (width <= 0) return;
+
+    desktopNav.classList.add("has-indicator");
+    navIndicator.style.width = `${width}px`;
+    navIndicator.style.transform = `translate3d(${left}px, 0, 0)`;
+    navIndicator.classList.add("is-ready");
+  };
+
   const trackedSections = Array.from(sections).filter((sec) => {
     const id = sec.getAttribute("id");
     return id && id !== "certifications" && id !== "dsa";
@@ -234,17 +303,24 @@ function initNavigation() {
 
   if (navLinks.length && trackedSections.length) {
     const trackedIds = new Set(trackedSections.map((sec) => sec.id));
+    let currentActiveId = trackedSections[0].id;
 
     const setActiveSection = (id) => {
+      currentActiveId = id;
+      let activeDesktopLink = null;
       navLinks.forEach((link) => {
         const isActive = link.getAttribute("data-section") === id;
         link.classList.toggle("is-active", isActive);
         if (isActive) {
           link.setAttribute("aria-current", "page");
+          if (link.classList.contains("nav-link")) {
+            activeDesktopLink = link;
+          }
         } else {
           link.removeAttribute("aria-current");
         }
       });
+      moveNavIndicator(activeDesktopLink);
     };
 
     let pendingTargetId = null;
@@ -264,12 +340,12 @@ function initNavigation() {
       pendingTargetId = id;
       pendingTimerId = window.setTimeout(() => {
         clearPendingTarget();
-        syncActiveSectionFromScroll();
+        syncActiveSectionFallback();
       }, 1000);
       setActiveSection(id);
     };
 
-    const syncActiveSectionFromScroll = () => {
+    const syncActiveSectionFallback = () => {
       const doc = document.documentElement;
       const atBottom = window.innerHeight + window.scrollY >= doc.scrollHeight - 4;
       const probeY = Math.min(Math.max(window.innerHeight * 0.35, 120), 260);
@@ -301,19 +377,56 @@ function initNavigation() {
           break;
         }
       }
-
       setActiveSection(activeId);
     };
 
-    let rafPending = false;
-    const scheduleSync = () => {
-      if (rafPending) return;
-      rafPending = true;
-      window.requestAnimationFrame(() => {
-        rafPending = false;
-        syncActiveSectionFromScroll();
-      });
-    };
+    if ("IntersectionObserver" in window) {
+      const visibleRatios = new Map();
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            visibleRatios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+          });
+
+          if (pendingTargetId) {
+            syncActiveSectionFallback();
+            return;
+          }
+
+          const doc = document.documentElement;
+          if (window.innerHeight + window.scrollY >= doc.scrollHeight - 4) {
+            setActiveSection(trackedSections[trackedSections.length - 1].id);
+            return;
+          }
+          if (window.scrollY < 80) {
+            setActiveSection(trackedSections[0].id);
+            return;
+          }
+
+          let bestId = null;
+          let bestRatio = 0;
+          trackedSections.forEach((sec) => {
+            const ratio = visibleRatios.get(sec.id) || 0;
+            if (ratio > bestRatio) {
+              bestRatio = ratio;
+              bestId = sec.id;
+            }
+          });
+
+          if (bestId) {
+            setActiveSection(bestId);
+          } else {
+            syncActiveSectionFallback();
+          }
+        },
+        {
+          rootMargin: "-22% 0px -48% 0px",
+          threshold: [0, 0.15, 0.35, 0.6],
+        }
+      );
+
+      trackedSections.forEach((sec) => sectionObserver.observe(sec));
+    }
 
     document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
       anchor.addEventListener("click", () => {
@@ -333,15 +446,25 @@ function initNavigation() {
       }
     });
 
-    window.addEventListener("scroll", scheduleSync, { passive: true });
-    window.addEventListener("resize", scheduleSync, { passive: true });
-    window.addEventListener("hashchange", scheduleSync);
-    syncActiveSectionFromScroll();
+    const repositionIndicator = () => {
+      const activeDesktop = document.querySelector(`.desktop-nav .nav-link[data-section="${currentActiveId}"]`);
+      moveNavIndicator(activeDesktop);
+    };
+
+    window.addEventListener("scroll", syncActiveSectionFallback, { passive: true });
+    window.addEventListener("resize", repositionIndicator, { passive: true });
+    window.addEventListener("hashchange", syncActiveSectionFallback);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(repositionIndicator);
+    }
+
+    syncActiveSectionFallback();
   }
 }
 
 function initScrollReveals() {
-  const targets = document.querySelectorAll(".reveal");
+  const targets = Array.from(document.querySelectorAll(".reveal"));
   if (!targets.length) return;
 
   if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
@@ -349,19 +472,55 @@ function initScrollReveals() {
     return;
   }
 
+  const heroReveals = document.querySelectorAll("#home .reveal");
+  const heroSet = new Set(heroReveals);
+
+  window.requestAnimationFrame(() => {
+    heroReveals.forEach((el) => el.classList.add("is-revealed"));
+  });
+
+  const pending = new Set(targets.filter((el) => !heroSet.has(el)));
+
   const observer = new IntersectionObserver(
     (entries, obs) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("is-revealed");
+          pending.delete(entry.target);
           obs.unobserve(entry.target);
         }
       });
     },
-    { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    { threshold: 0.1, rootMargin: "0px 0px -36px 0px" }
   );
 
-  targets.forEach((el) => observer.observe(el));
+  pending.forEach((el) => observer.observe(el));
+
+  let revealRaf = false;
+  const revealAboveOrInView = () => {
+    revealRaf = false;
+    const cutoff = window.innerHeight - 24;
+    pending.forEach((el) => {
+      if (el.getBoundingClientRect().top <= cutoff) {
+        el.classList.add("is-revealed");
+        pending.delete(el);
+        observer.unobserve(el);
+      }
+    });
+    if (pending.size === 0) {
+      window.removeEventListener("scroll", scheduleRevealSweep);
+    }
+  };
+
+  const scheduleRevealSweep = () => {
+    if (revealRaf || pending.size === 0) return;
+    revealRaf = true;
+    window.requestAnimationFrame(revealAboveOrInView);
+  };
+
+  window.addEventListener("scroll", scheduleRevealSweep, { passive: true });
+  window.addEventListener("hashchange", scheduleRevealSweep);
+  window.requestAnimationFrame(revealAboveOrInView);
 }
 
 function initHeroWorkbench() {
@@ -372,12 +531,13 @@ function initHeroWorkbench() {
   const stateEl = document.getElementById("telemetry-state");
 
   if (!tabs.length || !codeEl) return;
+  let switchTimer = null;
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const key = tab.getAttribute("data-tab");
       const data = WORKBENCH_MODULES[key];
-      if (!data) return;
+      if (!data || tab.classList.contains("is-active")) return;
 
       tabs.forEach((t) => {
         const active = t === tab;
@@ -385,11 +545,201 @@ function initHeroWorkbench() {
         t.setAttribute("aria-selected", String(active));
       });
 
-      codeEl.innerHTML = `<code>${data.codeHtml}</code>`;
-      if (modEl) modEl.textContent = data.module;
-      if (chanEl) chanEl.textContent = data.channel;
-      if (stateEl) stateEl.textContent = data.state;
+      const applySwap = () => {
+        codeEl.innerHTML = `<code>${data.codeHtml}</code>`;
+        if (modEl) modEl.textContent = data.module;
+        if (chanEl) chanEl.textContent = data.channel;
+        if (stateEl) stateEl.textContent = data.state;
+        codeEl.classList.remove("is-switching");
+      };
+
+      if (prefersReducedMotion()) {
+        applySwap();
+      } else {
+        window.clearTimeout(switchTimer);
+        codeEl.classList.add("is-switching");
+        switchTimer = window.setTimeout(applySwap, 130);
+      }
     });
+  });
+}
+
+function initInteractiveCards() {
+  if (!isFinePointerDesktop()) return;
+
+  const spotlightTargets = document.querySelectorAll(
+    ".project-card, .skill-group, .workbench-card, .achievement-spotlight"
+  );
+
+  spotlightTargets.forEach((card) => {
+    const isTiltCard = card.classList.contains("project-card");
+    let framePending = false;
+    let lastX = 0;
+    let lastY = 0;
+    let lastTarget = null;
+
+    const updateCardEffect = () => {
+      framePending = false;
+      const rect = card.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const x = lastX - rect.left;
+      const y = lastY - rect.top;
+      card.style.setProperty("--spot-x", `${x.toFixed(1)}px`);
+      card.style.setProperty("--spot-y", `${y.toFixed(1)}px`);
+
+      if (isTiltCard) {
+        const overInteractivePreview =
+          lastTarget && lastTarget.closest("#compass-canvas, .trackpad-surface, .watch-body");
+        if (overInteractivePreview) {
+          card.style.setProperty("--tilt-x", "0deg");
+          card.style.setProperty("--tilt-y", "0deg");
+          return;
+        }
+        const nx = (x / rect.width - 0.5) * 2;
+        const ny = (y / rect.height - 0.5) * 2;
+        const maxTilt = card.classList.contains("project-card--featured") ? 1.8 : 2.5;
+        const tiltY = nx * maxTilt;
+        const tiltX = -ny * maxTilt;
+        card.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+        card.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+      }
+    };
+
+    card.addEventListener("pointermove", (event) => {
+      lastX = event.clientX;
+      lastY = event.clientY;
+      lastTarget = event.target;
+      if (!framePending) {
+        framePending = true;
+        window.requestAnimationFrame(updateCardEffect);
+      }
+    });
+
+    card.addEventListener("pointerleave", () => {
+      if (isTiltCard) {
+        card.style.setProperty("--tilt-x", "0deg");
+        card.style.setProperty("--tilt-y", "0deg");
+      }
+    });
+  });
+}
+
+function initMagneticAndRipples() {
+  const buttons = document.querySelectorAll(".btn");
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      if (prefersReducedMotion()) return;
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement("span");
+      ripple.className = "btn-ripple";
+      ripple.style.width = `${size}px`;
+      ripple.style.height = `${size}px`;
+      const cx = event.clientX ? event.clientX - rect.left : rect.width / 2;
+      const cy = event.clientY ? event.clientY - rect.top : rect.height / 2;
+      ripple.style.left = `${cx - size / 2}px`;
+      ripple.style.top = `${cy - size / 2}px`;
+      btn.appendChild(ripple);
+
+      const cleanup = () => ripple.remove();
+      ripple.addEventListener("animationend", cleanup, { once: true });
+      window.setTimeout(cleanup, 650);
+    });
+  });
+
+  if (!isFinePointerDesktop()) return;
+
+  const magneticTargets = document.querySelectorAll(".btn-primary, .btn-nav");
+  magneticTargets.forEach((el) => {
+    let rafId = null;
+
+    el.addEventListener("pointermove", (event) => {
+      const rect = el.getBoundingClientRect();
+      const dx = ((event.clientX - rect.left) / rect.width - 0.5) * 8;
+      const dy = ((event.clientY - rect.top) / rect.height - 0.5) * 6;
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(() => {
+        el.style.transform = `translate3d(${dx.toFixed(2)}px, ${(dy - 2).toFixed(2)}px, 0)`;
+      });
+    });
+
+    el.addEventListener("pointerleave", () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      el.style.transform = "";
+    });
+  });
+}
+
+function initCustomCursor() {
+  const follower = document.getElementById("cursor-follower");
+  if (!follower || !isFinePointerDesktop()) return;
+
+  let targetX = -100;
+  let targetY = -100;
+  let currentX = -100;
+  let currentY = -100;
+  let active = false;
+  let rafId = null;
+
+  const interactiveSelector =
+    "a, button, .nav-link, .social-pill, .contact-card, .skill-list li, .tech-badge, .topic-pill";
+  const hideSelector = "#compass-canvas, .trackpad-surface";
+
+  const render = () => {
+    currentX += (targetX - currentX) * 0.24;
+    currentY += (targetY - currentY) * 0.24;
+    const half = follower.offsetWidth * 0.5;
+    const tx = `${(currentX - half).toFixed(1)}px`;
+    const ty = `${(currentY - half).toFixed(1)}px`;
+    follower.style.setProperty("--cx", tx);
+    follower.style.setProperty("--cy", ty);
+    follower.style.transform = `translate3d(${tx}, ${ty}, 0)`;
+
+    if (Math.abs(targetX - currentX) > 0.2 || Math.abs(targetY - currentY) > 0.2) {
+      rafId = window.requestAnimationFrame(render);
+    } else {
+      rafId = null;
+    }
+  };
+
+  document.addEventListener(
+    "pointermove",
+    (event) => {
+      if (event.pointerType !== "mouse") return;
+      targetX = event.clientX;
+      targetY = event.clientY;
+      if (!active) {
+        active = true;
+        currentX = targetX;
+        currentY = targetY;
+        follower.classList.add("is-visible");
+      }
+
+      const target = event.target;
+      follower.classList.toggle("is-hidden", Boolean(target && target.closest(hideSelector)));
+      follower.classList.toggle(
+        "is-hovering",
+        Boolean(target && target.closest(interactiveSelector))
+      );
+
+      if (!rafId) {
+        rafId = window.requestAnimationFrame(render);
+      }
+    },
+    { passive: true }
+  );
+
+  document.addEventListener("pointerdown", () => follower.classList.add("is-pressed"), {
+    passive: true,
+  });
+  document.addEventListener("pointerup", () => follower.classList.remove("is-pressed"), {
+    passive: true,
+  });
+  document.addEventListener("mouseleave", () => {
+    active = false;
+    follower.classList.remove("is-visible");
   });
 }
 
@@ -417,6 +767,8 @@ function initCursorlyTrackpad() {
   let currentX = 0.5;
   let currentY = 0.46;
   let pointerInside = false;
+  let isInViewport = true;
+  let rafId = null;
 
   surface.addEventListener("pointerenter", () => {
     pointerInside = true;
@@ -434,7 +786,22 @@ function initCursorlyTrackpad() {
     targetY = Math.min(0.84, Math.max(0.12, (event.clientY - rect.top) / rect.height));
   });
 
+  surface.addEventListener("pointerdown", (event) => {
+    if (prefersReducedMotion()) return;
+    const rect = surface.getBoundingClientRect();
+    const burst = document.createElement("span");
+    burst.className = "trackpad-click-ripple";
+    burst.style.left = `${event.clientX - rect.left}px`;
+    burst.style.top = `${event.clientY - rect.top}px`;
+    surface.appendChild(burst);
+    burst.addEventListener("animationend", () => burst.remove(), { once: true });
+    window.setTimeout(() => burst.remove(), 600);
+  });
+
   const animateTrackpad = (now) => {
+    rafId = null;
+    if (!isInViewport || document.hidden) return;
+
     if (!pointerInside && !prefersReducedMotion()) {
       const t = now * 0.0014;
       targetX = 0.5 + Math.cos(t) * 0.16;
@@ -463,13 +830,29 @@ function initCursorlyTrackpad() {
     }
 
     if (!prefersReducedMotion()) {
-      window.requestAnimationFrame(animateTrackpad);
+      rafId = window.requestAnimationFrame(animateTrackpad);
     }
   };
 
-  if (!prefersReducedMotion()) {
-    window.requestAnimationFrame(animateTrackpad);
+  const ensureRunning = () => {
+    if (!prefersReducedMotion() && isInViewport && !document.hidden && !rafId) {
+      rafId = window.requestAnimationFrame(animateTrackpad);
+    }
+  };
+
+  if ("IntersectionObserver" in window) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        isInViewport = entries[0].isIntersecting;
+        if (isInViewport) ensureRunning();
+      },
+      { threshold: 0.05 }
+    );
+    obs.observe(surface);
   }
+
+  document.addEventListener("visibilitychange", ensureRunning);
+  ensureRunning();
 }
 
 /**
@@ -485,14 +868,32 @@ function initCompassCanvas() {
   const rollEl = document.getElementById("telemetry-roll");
   const quatEl = document.getElementById("telemetry-quat");
 
+  const logicalWidth = 360;
+  const logicalHeight = 220;
+
+  const syncCanvasDpr = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = logicalWidth * dpr;
+    canvas.height = logicalHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  syncCanvasDpr();
+  window.addEventListener("resize", syncCanvasDpr, { passive: true });
+
   let yaw = 0.48;
   let pitch = -0.32;
   let roll = 0.16;
+  let velYaw = 0;
+  let velPitch = 0;
   let isDragging = false;
+  let isInViewport = true;
+  let rafId = null;
   let lastPointer = { x: 0, y: 0 };
 
   canvas.addEventListener("pointerdown", (e) => {
     isDragging = true;
+    velYaw = 0;
+    velPitch = 0;
     lastPointer = { x: e.clientX, y: e.clientY };
     canvas.setPointerCapture(e.pointerId);
   });
@@ -502,8 +903,10 @@ function initCompassCanvas() {
     const dx = e.clientX - lastPointer.x;
     const dy = e.clientY - lastPointer.y;
     lastPointer = { x: e.clientX, y: e.clientY };
-    yaw += dx * 0.012;
-    pitch = Math.max(-1.1, Math.min(1.1, pitch + dy * 0.012));
+    velYaw = dx * 0.012;
+    velPitch = dy * 0.012;
+    yaw += velYaw;
+    pitch = Math.max(-1.1, Math.min(1.1, pitch + velPitch));
     if (prefersReducedMotion()) drawFrame();
   });
 
@@ -513,7 +916,6 @@ function initCompassCanvas() {
   canvas.addEventListener("pointerup", stopDrag);
   canvas.addEventListener("pointercancel", stopDrag);
 
-  // Smartphone cuboid vertices (width, height, depth)
   const w = 42;
   const h = 80;
   const d = 6;
@@ -522,7 +924,6 @@ function initCompassCanvas() {
     [-w, -h, d],  [w, -h, d],  [w, h, d],  [-w, h, d],
   ];
 
-  // Inner display rectangle slightly proud of front face
   const sw = 35;
   const sh = 68;
   const screenVerts = [
@@ -536,19 +937,16 @@ function initCompassCanvas() {
   ];
 
   const rotatePoint = ([x, y, z]) => {
-    // Roll (Z)
     const cz = Math.cos(roll), sz = Math.sin(roll);
     const x1 = x * cz - y * sz;
     const y1 = x * sz + y * cz;
     const z1 = z;
 
-    // Pitch (X)
     const cx = Math.cos(pitch), sx = Math.sin(pitch);
     const y2 = y1 * cx - z1 * sx;
     const z2 = y1 * sx + z1 * cx;
     const x2 = x1;
 
-    // Yaw (Y)
     const cy = Math.cos(yaw), sy = Math.sin(yaw);
     const x3 = x2 * cy + z2 * sy;
     const z3 = -x2 * sy + z2 * cy;
@@ -556,7 +954,7 @@ function initCompassCanvas() {
 
     const fov = 340;
     const scale = fov / (fov + z3 + 90);
-    return [canvas.width / 2 + x3 * scale, canvas.height / 2 + y3 * scale, z3];
+    return [logicalWidth / 2 + x3 * scale, logicalHeight / 2 + y3 * scale, z3];
   };
 
   const updateTelemetry = () => {
@@ -575,19 +973,17 @@ function initCompassCanvas() {
   };
 
   const drawFrame = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
-    // Subtle reference horizon ring
     ctx.beginPath();
-    ctx.ellipse(canvas.width / 2, canvas.height / 2 + 6, 110, 32, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(96, 165, 250, 0.14)";
+    ctx.ellipse(logicalWidth / 2, logicalHeight / 2 + 6, 110, 32, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(96, 165, 250, 0.16)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
     const proj = vertices.map(rotatePoint);
     const projScreen = screenVerts.map(rotatePoint);
 
-    // Draw screen face fill
     ctx.beginPath();
     ctx.moveTo(projScreen[0][0], projScreen[0][1]);
     for (let i = 1; i < projScreen.length; i++) {
@@ -600,17 +996,15 @@ function initCompassCanvas() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Draw chassis edges
     ctx.beginPath();
     edges.forEach(([a, b]) => {
       ctx.moveTo(proj[a][0], proj[a][1]);
       ctx.lineTo(proj[b][0], proj[b][1]);
     });
-    ctx.strokeStyle = "rgba(245, 245, 247, 0.72)";
+    ctx.strokeStyle = "rgba(245, 245, 247, 0.76)";
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
-    // Orientation center vector arrow
     const origin = rotatePoint([0, 0, 0]);
     const zAxis = rotatePoint([0, 0, 56]);
     ctx.beginPath();
@@ -630,30 +1024,58 @@ function initCompassCanvas() {
 
   let lastTime = 0;
   const tick = (ts) => {
+    rafId = null;
+    if (!isInViewport || document.hidden) {
+      lastTime = 0;
+      return;
+    }
+
     const dt = lastTime ? Math.min(0.05, (ts - lastTime) / 1000) : 0.016;
     lastTime = ts;
 
     if (!isDragging && !prefersReducedMotion()) {
-      yaw += dt * 0.55;
-      pitch = -0.28 + Math.sin(ts * 0.0011) * 0.16;
+      yaw += dt * 0.55 + velYaw;
+      pitch = Math.max(-1.1, Math.min(1.1, pitch + velPitch));
+      velYaw *= 0.92;
+      velPitch *= 0.92;
+      if (Math.abs(velPitch) < 0.0005) {
+        pitch += (-0.28 + Math.sin(ts * 0.0011) * 0.16 - pitch) * 0.06;
+      }
       roll = Math.cos(ts * 0.0009) * 0.14;
     }
 
     drawFrame();
     if (!prefersReducedMotion()) {
-      window.requestAnimationFrame(tick);
+      rafId = window.requestAnimationFrame(tick);
     }
   };
 
-  drawFrame();
-  if (!prefersReducedMotion()) {
-    window.requestAnimationFrame(tick);
+  const ensureRunning = () => {
+    if (!prefersReducedMotion() && isInViewport && !document.hidden && !rafId) {
+      rafId = window.requestAnimationFrame(tick);
+    }
+  };
+
+  if ("IntersectionObserver" in window) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        isInViewport = entries[0].isIntersecting;
+        if (isInViewport) ensureRunning();
+      },
+      { threshold: 0.05 }
+    );
+    obs.observe(canvas);
   }
+
+  document.addEventListener("visibilitychange", ensureRunning);
+  drawFrame();
+  ensureRunning();
 }
 
 function initSmartwatchPreview() {
   const tabs = document.querySelectorAll(".watch-tab");
   const views = document.querySelectorAll(".watch-view");
+  const tiles = document.querySelectorAll(".watch-tile");
   const timeEl = document.getElementById("watch-time");
   const dateEl = document.getElementById("watch-date");
 
@@ -664,6 +1086,14 @@ function initSmartwatchPreview() {
       views.forEach((v) =>
         v.classList.toggle("is-active", v.getAttribute("data-screen") === target)
       );
+    });
+  });
+
+  tiles.forEach((tile) => {
+    tile.addEventListener("click", () => {
+      const next = !tile.classList.contains("is-on");
+      tile.classList.toggle("is-on", next);
+      tile.setAttribute("aria-pressed", String(next));
     });
   });
 
@@ -698,6 +1128,7 @@ function initSmartwatchPreview() {
 function initCopyEmail() {
   const copyBtn = document.getElementById("copy-email-btn");
   if (!copyBtn) return;
+  let resetTimerId = null;
 
   copyBtn.addEventListener("click", async () => {
     const email = PORTFOLIO_CONFIG.owner.email;
@@ -730,13 +1161,32 @@ function initCopyEmail() {
 
     if (copied) {
       const label = copyBtn.querySelector("span");
-      if (label) {
-        const original = label.textContent;
-        label.textContent = "Email Copied";
-        window.setTimeout(() => {
-          label.textContent = original;
-        }, 2200);
+      const icon = copyBtn.querySelector("svg, i");
+      copyBtn.classList.add("is-copied");
+      if (label) label.textContent = "Email Copied";
+
+      if (icon && window.lucide && typeof window.lucide.createIcons === "function") {
+        const checkPlaceholder = document.createElement("i");
+        checkPlaceholder.setAttribute("data-lucide", "check");
+        checkPlaceholder.setAttribute("aria-hidden", "true");
+        icon.replaceWith(checkPlaceholder);
+        window.lucide.createIcons({ nodes: [copyBtn] });
       }
+
+      window.clearTimeout(resetTimerId);
+      resetTimerId = window.setTimeout(() => {
+        copyBtn.classList.remove("is-copied");
+        if (label) label.textContent = "Copy Email";
+        const currentIcon = copyBtn.querySelector("svg, i");
+        if (currentIcon && window.lucide && typeof window.lucide.createIcons === "function") {
+          const copyPlaceholder = document.createElement("i");
+          copyPlaceholder.setAttribute("data-lucide", "copy");
+          copyPlaceholder.setAttribute("aria-hidden", "true");
+          currentIcon.replaceWith(copyPlaceholder);
+          window.lucide.createIcons({ nodes: [copyBtn] });
+        }
+      }, 2200);
+
       showToast(`Copied ${email} to clipboard.`);
     } else {
       showToast(`Email: ${email}`);
@@ -749,6 +1199,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initScrollReveals();
   initHeroWorkbench();
+  initInteractiveCards();
+  initMagneticAndRipples();
+  initCustomCursor();
   initCursorlyTrackpad();
   initCompassCanvas();
   initSmartwatchPreview();
