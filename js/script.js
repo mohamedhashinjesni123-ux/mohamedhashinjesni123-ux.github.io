@@ -26,13 +26,13 @@ const PORTFOLIO_CONFIG = {
     },
     fairscore: {
       title: "FairScore",
-      // Configurable placeholder: paste the GitHub repository URL here when published.
-      repoUrl: "",
+      repoUrl: "https://github.com/mhsatgit/FairScore",
+      liveUrl: "https://mhsatgit.github.io/FairScore/",
     },
     smartwatch: {
       title: "Smartwatch UI Replica",
-      // Configurable placeholder: paste the GitHub repository URL here when published.
-      repoUrl: "",
+      repoUrl: "https://github.com/mhsatgit/SmartWatch",
+      liveUrl: "https://mhsatgit.github.io/SmartWatch/",
     },
   },
 };
@@ -154,6 +154,16 @@ function applyPortfolioConfig() {
     }
   });
 
+  document.querySelectorAll("[data-project-demo]").forEach((anchor) => {
+    const key = anchor.getAttribute("data-project-demo");
+    const project = projects[key];
+    if (!project || !project.liveUrl) return;
+
+    anchor.setAttribute("href", project.liveUrl);
+    anchor.setAttribute("target", "_blank");
+    anchor.setAttribute("rel", "noopener noreferrer");
+  });
+
   const yearEl = document.getElementById("copyright-year");
   if (yearEl) {
     yearEl.textContent = String(new Date().getFullYear());
@@ -217,27 +227,97 @@ function initNavigation() {
     });
   }
 
-  if ("IntersectionObserver" in window && sections.length) {
+  const trackedSections = Array.from(sections).filter((sec) => {
+    const id = sec.getAttribute("id");
+    return id && id !== "certifications" && id !== "dsa";
+  });
+
+  if (navLinks.length && trackedSections.length) {
     const setActiveSection = (id) => {
       navLinks.forEach((link) => {
         link.classList.toggle("is-active", link.getAttribute("data-section") === id);
       });
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.getAttribute("id");
-            if (id === "certifications" || id === "dsa") return;
-            setActiveSection(id);
-          }
-        });
-      },
-      { rootMargin: "-35% 0px -50% 0px", threshold: 0.05 }
-    );
+    let pendingTargetId = null;
+    let pendingTimerId = null;
 
-    sections.forEach((sec) => observer.observe(sec));
+    const clearPendingTarget = () => {
+      pendingTargetId = null;
+      if (pendingTimerId !== null) {
+        window.clearTimeout(pendingTimerId);
+        pendingTimerId = null;
+      }
+    };
+
+    const syncActiveSectionFromScroll = () => {
+      const doc = document.documentElement;
+      const atBottom = window.innerHeight + window.scrollY >= doc.scrollHeight - 4;
+      const probeY = Math.min(Math.max(window.innerHeight * 0.35, 120), 260);
+
+      if (pendingTargetId) {
+        const target = document.getElementById(pendingTargetId);
+        const rect = target ? target.getBoundingClientRect() : null;
+        const arrived =
+          !rect ||
+          (atBottom && pendingTargetId === trackedSections[trackedSections.length - 1].id) ||
+          (rect.top <= probeY && rect.top >= -40);
+        if (!arrived) {
+          setActiveSection(pendingTargetId);
+          return;
+        }
+        clearPendingTarget();
+      }
+
+      if (atBottom) {
+        setActiveSection(trackedSections[trackedSections.length - 1].id);
+        return;
+      }
+
+      let activeId = trackedSections[0].id;
+      for (const section of trackedSections) {
+        if (section.getBoundingClientRect().top <= probeY) {
+          activeId = section.id;
+        } else {
+          break;
+        }
+      }
+
+      setActiveSection(activeId);
+    };
+
+    let rafPending = false;
+    const scheduleSync = () => {
+      if (rafPending) return;
+      rafPending = true;
+      window.requestAnimationFrame(() => {
+        rafPending = false;
+        syncActiveSectionFromScroll();
+      });
+    };
+
+    navLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        const id = link.getAttribute("data-section");
+        if (!id) return;
+        clearPendingTarget();
+        pendingTargetId = id;
+        pendingTimerId = window.setTimeout(() => {
+          clearPendingTarget();
+          syncActiveSectionFromScroll();
+        }, 1000);
+        setActiveSection(id);
+      });
+    });
+
+    ["wheel", "touchstart"].forEach((evt) => {
+      window.addEventListener(evt, clearPendingTarget, { passive: true });
+    });
+
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync, { passive: true });
+    window.addEventListener("hashchange", scheduleSync);
+    syncActiveSectionFromScroll();
   }
 }
 
