@@ -672,77 +672,6 @@ function initMagneticAndRipples() {
   });
 }
 
-function initCustomCursor() {
-  const follower = document.getElementById("cursor-follower");
-  if (!follower || !isFinePointerDesktop()) return;
-
-  let targetX = -100;
-  let targetY = -100;
-  let currentX = -100;
-  let currentY = -100;
-  let active = false;
-  let rafId = null;
-
-  const interactiveSelector =
-    "a, button, .nav-link, .social-pill, .contact-card, .skill-list li, .tech-badge, .topic-pill";
-  const hideSelector = "#compass-canvas, .trackpad-surface";
-
-  const render = () => {
-    currentX += (targetX - currentX) * 0.24;
-    currentY += (targetY - currentY) * 0.24;
-    const half = follower.offsetWidth * 0.5;
-    const tx = `${(currentX - half).toFixed(1)}px`;
-    const ty = `${(currentY - half).toFixed(1)}px`;
-    follower.style.setProperty("--cx", tx);
-    follower.style.setProperty("--cy", ty);
-    follower.style.transform = `translate3d(${tx}, ${ty}, 0)`;
-
-    if (Math.abs(targetX - currentX) > 0.2 || Math.abs(targetY - currentY) > 0.2) {
-      rafId = window.requestAnimationFrame(render);
-    } else {
-      rafId = null;
-    }
-  };
-
-  document.addEventListener(
-    "pointermove",
-    (event) => {
-      if (event.pointerType !== "mouse") return;
-      targetX = event.clientX;
-      targetY = event.clientY;
-      if (!active) {
-        active = true;
-        currentX = targetX;
-        currentY = targetY;
-        follower.classList.add("is-visible");
-      }
-
-      const target = event.target;
-      follower.classList.toggle("is-hidden", Boolean(target && target.closest(hideSelector)));
-      follower.classList.toggle(
-        "is-hovering",
-        Boolean(target && target.closest(interactiveSelector))
-      );
-
-      if (!rafId) {
-        rafId = window.requestAnimationFrame(render);
-      }
-    },
-    { passive: true }
-  );
-
-  document.addEventListener("pointerdown", () => follower.classList.add("is-pressed"), {
-    passive: true,
-  });
-  document.addEventListener("pointerup", () => follower.classList.remove("is-pressed"), {
-    passive: true,
-  });
-  document.addEventListener("mouseleave", () => {
-    active = false;
-    follower.classList.remove("is-visible");
-  });
-}
-
 function initCursorlyTrackpad() {
   const surface = document.getElementById("cursorly-trackpad");
   const pointer = document.getElementById("cursorly-pointer");
@@ -1201,7 +1130,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initHeroWorkbench();
   initInteractiveCards();
   initMagneticAndRipples();
-  initCustomCursor();
   initCursorlyTrackpad();
   initCompassCanvas();
   initSmartwatchPreview();

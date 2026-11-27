@@ -163,55 +163,6 @@ pre code {
   will-change: transform;
 }
 
-/* Desktop Custom Cursor Follower */
-.cursor-follower {
-  display: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .cursor-follower {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 1px solid rgba(96, 165, 250, 0.42);
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.08), transparent 70%);
-    pointer-events: none;
-    z-index: 180;
-    opacity: 0;
-    transform: translate3d(-100px, -100px, 0) scale(1);
-    transition:
-      opacity 0.24s ease,
-      width 0.24s var(--ease-out),
-      height 0.24s var(--ease-out),
-      border-color 0.24s ease,
-      background-color 0.24s ease;
-    will-change: transform;
-  }
-
-  .cursor-follower.is-visible {
-    opacity: 1;
-  }
-
-  .cursor-follower.is-hovering {
-    width: 42px;
-    height: 42px;
-    border-color: rgba(167, 139, 250, 0.65);
-    background: radial-gradient(circle, rgba(96, 165, 250, 0.14), transparent 72%);
-  }
-
-  .cursor-follower.is-pressed {
-    transform: translate3d(var(--cx, -100px), var(--cy, -100px), 0) scale(0.84);
-  }
-
-  .cursor-follower.is-hidden {
-    opacity: 0;
-  }
-}
-
 /* Ambient Background */
 .ambient-backdrop {
   position: fixed;
@@ -3023,8 +2974,7 @@ pre code {
   .project-card::after,
   .skill-group::before,
   .workbench-card::before,
-  .achievement-spotlight::before,
-  .cursor-follower {
+  .achievement-spotlight::before {
     display: none;
   }
 }
@@ -3043,7 +2993,6 @@ pre code {
     transition-duration: 0.01ms !important;
   }
 
-  .cursor-follower,
   .btn-ripple,
   .trackpad-click-ripple {
     display: none !important;
