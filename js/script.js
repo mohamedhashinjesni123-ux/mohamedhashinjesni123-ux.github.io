@@ -950,7 +950,7 @@ function initCompassCanvas() {
 
     ctx.beginPath();
     ctx.ellipse(logicalWidth / 2, logicalHeight / 2 + 6, 110, 32, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(96, 165, 250, 0.16)";
+    ctx.strokeStyle = "rgba(248, 113, 113, 0.18)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -963,9 +963,9 @@ function initCompassCanvas() {
       ctx.lineTo(projScreen[i][0], projScreen[i][1]);
     }
     ctx.closePath();
-    ctx.fillStyle = "rgba(59, 130, 246, 0.12)";
+    ctx.fillStyle = "rgba(239, 68, 68, 0.14)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(167, 139, 250, 0.45)";
+    ctx.strokeStyle = "rgba(251, 113, 133, 0.5)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -974,7 +974,7 @@ function initCompassCanvas() {
       ctx.moveTo(proj[a][0], proj[a][1]);
       ctx.lineTo(proj[b][0], proj[b][1]);
     });
-    ctx.strokeStyle = "rgba(245, 245, 247, 0.76)";
+    ctx.strokeStyle = "rgba(245, 245, 247, 0.78)";
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
@@ -983,13 +983,13 @@ function initCompassCanvas() {
     ctx.beginPath();
     ctx.moveTo(origin[0], origin[1]);
     ctx.lineTo(zAxis[0], zAxis[1]);
-    ctx.strokeStyle = "#60a5fa";
+    ctx.strokeStyle = "#f87171";
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(zAxis[0], zAxis[1], 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = "#60a5fa";
+    ctx.fillStyle = "#f87171";
     ctx.fill();
 
     updateTelemetry();

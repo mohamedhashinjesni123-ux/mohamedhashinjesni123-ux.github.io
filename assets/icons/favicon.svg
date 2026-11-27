@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#08090D"/>
-  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" stroke="url(#borderGrad)" stroke-opacity="0.55" stroke-width="1.5"/>
+  <rect width="64" height="64" rx="16" fill="#070709"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" stroke="url(#borderGrad)" stroke-opacity="0.6" stroke-width="1.5"/>
   <path d="M15 44V20H20.5L27 32.5L33.5 20H39V44H34V29.2L28.5 39.5H25.5L20 29.2V44H15Z" fill="#F5F5F7"/>
   <path d="M43 20H48.2V29.6H49V20H54V44H49V34.2H48.2V44H43V20Z" fill="url(#accentGrad)"/>
   <defs>
     <linearGradient id="borderGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3B82F6"/>
-      <stop offset="1" stop-color="#7C5CFF"/>
+      <stop stop-color="#EF4444"/>
+      <stop offset="1" stop-color="#B91C1C"/>
     </linearGradient>
     <linearGradient id="accentGrad" x1="43" y1="20" x2="54" y2="44" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#60A5FA"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+      <stop stop-color="#F87171"/>
+      <stop offset="1" stop-color="#FB7185"/>
     </linearGradient>
   </defs>
 </svg>
