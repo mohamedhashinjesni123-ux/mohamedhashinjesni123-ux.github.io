@@ -233,9 +233,17 @@ function initNavigation() {
   });
 
   if (navLinks.length && trackedSections.length) {
+    const trackedIds = new Set(trackedSections.map((sec) => sec.id));
+
     const setActiveSection = (id) => {
       navLinks.forEach((link) => {
-        link.classList.toggle("is-active", link.getAttribute("data-section") === id);
+        const isActive = link.getAttribute("data-section") === id;
+        link.classList.toggle("is-active", isActive);
+        if (isActive) {
+          link.setAttribute("aria-current", "page");
+        } else {
+          link.removeAttribute("aria-current");
+        }
       });
     };
 
@@ -248,6 +256,17 @@ function initNavigation() {
         window.clearTimeout(pendingTimerId);
         pendingTimerId = null;
       }
+    };
+
+    const activateTargetOnNavigate = (id) => {
+      if (!id || !trackedIds.has(id)) return;
+      clearPendingTarget();
+      pendingTargetId = id;
+      pendingTimerId = window.setTimeout(() => {
+        clearPendingTarget();
+        syncActiveSectionFromScroll();
+      }, 1000);
+      setActiveSection(id);
     };
 
     const syncActiveSectionFromScroll = () => {
@@ -296,22 +315,22 @@ function initNavigation() {
       });
     };
 
-    navLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        const id = link.getAttribute("data-section");
-        if (!id) return;
-        clearPendingTarget();
-        pendingTargetId = id;
-        pendingTimerId = window.setTimeout(() => {
-          clearPendingTarget();
-          syncActiveSectionFromScroll();
-        }, 1000);
-        setActiveSection(id);
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener("click", () => {
+        const href = anchor.getAttribute("href");
+        if (!href || href.length < 2) return;
+        activateTargetOnNavigate(href.slice(1));
       });
     });
 
     ["wheel", "touchstart"].forEach((evt) => {
       window.addEventListener(evt, clearPendingTarget, { passive: true });
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
+        clearPendingTarget();
+      }
     });
 
     window.addEventListener("scroll", scheduleSync, { passive: true });
@@ -653,17 +672,27 @@ function initSmartwatchPreview() {
     if (timeEl) {
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
-      timeEl.textContent = `${hh}:${mm}`;
+      const formattedTime = `${hh}:${mm}`;
+      if (timeEl.textContent !== formattedTime) {
+        timeEl.textContent = formattedTime;
+      }
     }
     if (dateEl) {
       const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
       const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-      dateEl.textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+      const formattedDate = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+      if (dateEl.textContent !== formattedDate) {
+        dateEl.textContent = formattedDate;
+      }
     }
   };
 
   updateWatchClock();
-  window.setInterval(updateWatchClock, 30000);
+  window.setInterval(updateWatchClock, 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) updateWatchClock();
+  });
+  window.addEventListener("focus", updateWatchClock);
 }
 
 function initCopyEmail() {
